@@ -1,70 +1,181 @@
-# Getting Started with Create React App
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jogo da Velha</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+  <style>
+    body {
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+      text-align: center;
+      background-image: url(image/roxo.jpeg);
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+    h1 {
+      color: #f8f4f4;
+    }
+    .board {
+      border: 4px solid #2a1131;
+      width: 204px;
+      height: 204px;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+    }
+    .square {
+      background: #fff;
+      font-size: 50px;
+      font-weight: bold;
+      line-height: 68px;
+      height: 68px;
+      padding: 0;
+      text-align: center;
+      width: 68px;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.2s;
+    }
+    .square:hover {
+      background: #eee;
+    }
+    .status {
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+    .restart-button {
+      padding: 11px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 20px;
+      background-color: #791e74;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .restart-button:hover {
+      background-color: #311331;
+    }
+  </style>
+</head>
 
-## Available Scripts
+<body>
 
-In the project directory, you can run:
+  <h1>Jogo da Velha</h1>
+  <div id="root"></div>
 
-### `npm start`
+  <script type="text/babel">
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+    function Square({ value, onSquareClick }) {
+      return (
+        <button className="square" onClick={onSquareClick}>
+          {value}
+        </button>
+      );
+    }
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+    function Board({ xIsNext, squares, onPlay }) {
 
-### `npm test`
+      function handleClick(i) {
+        if (squares[i] || calculateWinner(squares)) return;
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+        const nextSquares = squares.slice();
+        nextSquares[i] = xIsNext ? "X" : "O";
+        onPlay(nextSquares);
+      }
 
-### `npm run build`
+      const winner = calculateWinner(squares);
+      const status = winner
+        ? "Vencedor: " + winner
+        : "Próximo jogador: " + (xIsNext ? "X" : "O");
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+      return (
+        <>
+          <div className="status">{status}</div>
+          <div className="board">
+            {squares.map((value, i) => (
+              <Square
+                key={i}
+                value={value}
+                onSquareClick={() => handleClick(i)}
+              />
+            ))}
+          </div>
+        </>);}
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    function Game() {
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+      const [history, setHistory] = React.useState([Array(9).fill(null)]);
+      const [currentMove, setCurrentMove] = React.useState(0);
 
-### `npm run eject`
+      const xIsNext = currentMove % 2 === 0;
+      const currentSquares = history[currentMove];
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+      function handlePlay(nextSquares) {
+        const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+        setHistory(nextHistory);
+        setCurrentMove(nextHistory.length - 1);
+      }
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+      function jumpTo(move) {
+        setCurrentMove(move);
+      }
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+      const moves = history.map((squares, move) => {
+        const description = move
+          ? "Ir para jogada #" + move
+          : "Ir para o início do jogo";
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+        return (
+          <li key={move}>
+            <button onClick={() => jumpTo(move)}>{description}</button>
+          </li>
+        );
+      });
 
-## Learn More
+      return (
+        <div className="game">
+          <div className="game-board">
+            <Board
+              xIsNext={xIsNext}
+              squares={currentSquares}
+              onPlay={handlePlay}
+            />
+          </div>
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+          <div className="game-info">
+            <ol>{moves}</ol>
+          </div>
+        </div>
+      );
+    }
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    function calculateWinner(squares) {
+      const lines = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ];
+      for (let [a, b, c] of lines) {
+        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+          return squares[a];
+        }
+      }
+      return null;
+    }
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<Game />);
+  </script>
+</body>
+</html>
